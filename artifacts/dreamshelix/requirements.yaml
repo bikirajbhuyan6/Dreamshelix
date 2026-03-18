@@ -1,0 +1,28 @@
+packages:
+  "framer-motion": "For advanced page transitions, scroll effects, and micro-interactions"
+  "recharts": "For rendering beautiful analytics charts in the admin and student dashboards"
+  "date-fns": "For formatting timestamps and dates elegantly"
+  "jwt-decode": "To decode JWT tokens for role-based routing"
+  "zustand": "For lightweight global auth and UI state management"
+  "clsx": "For conditional class name merging"
+  "tailwind-merge": "For merging tailwind classes safely"
+
+images:
+  - path: "artifacts/dreamshelix/public/images/hero-bg.png"
+    description: "Abstract 3D gradient mesh in deep navy, vibrant purple, and neon orange, glossy glassmorphism, highly detailed, futuristic tech education vibe, dark mode"
+    aspect_ratio: "16:9"
+  - path: "artifacts/dreamshelix/public/images/abstract-shape-1.png"
+    description: "Floating 3D glass sphere with purple internal glow, dark background, transparent png style"
+    aspect_ratio: "1:1"
+  - path: "artifacts/dreamshelix/public/images/abstract-shape-2.png"
+    description: "Floating 3D glass torus with orange and pink internal glow, dark background, transparent png style"
+    aspect_ratio: "1:1"
+  - path: "artifacts/dreamshelix/public/images/logo.png"
+    description: "Premium EdTech logo mark, letter D and H intertwined like a DNA helix, deep purple and orange gradient, modern minimalist vector, dark background"
+    aspect_ratio: "1:1"
+
+notes:
+  - Using generated orval hooks from @workspace/api-client-react
+  - wouter for routing
+  - Auth token stored in localStorage and passed via hook request options
+  - Dark mode first design implementation

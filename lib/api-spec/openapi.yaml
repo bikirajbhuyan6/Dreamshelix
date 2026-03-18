@@ -1,22 +1,37 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
+  description: Dreamshelix India EdTech Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: courses
+    description: Course management
+  - name: enrollments
+    description: Enrollment operations
+  - name: referrals
+    description: Referral system
+  - name: payments
+    description: Payment operations
+  - name: admin
+    description: Admin operations
+  - name: notifications
+    description: Notification system
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +39,582 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List all published courses
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of courses
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CoursesListResponse"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create a new course (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseRequest"
+      responses:
+        "201":
+          description: Course created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /courses/{courseId}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      summary: Get course details
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Course details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseDetail"
+    put:
+      operationId: updateCourse
+      tags: [courses]
+      summary: Update a course (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCourseRequest"
+      responses:
+        "200":
+          description: Course updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      summary: Delete a course (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Course deleted
+
+  /enrollments:
+    get:
+      operationId: listMyEnrollments
+      tags: [enrollments]
+      summary: Get my enrolled courses
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: My enrollments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Enrollment"
+    post:
+      operationId: enrollCourse
+      tags: [enrollments]
+      summary: Enroll in a course
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnrollRequest"
+      responses:
+        "201":
+          description: Enrolled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+
+  /enrollments/{courseId}/progress:
+    put:
+      operationId: updateProgress
+      tags: [enrollments]
+      summary: Update course progress
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProgressUpdateRequest"
+      responses:
+        "200":
+          description: Progress updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Enrollment"
+
+  /referrals/my:
+    get:
+      operationId: getMyReferrals
+      tags: [referrals]
+      summary: Get my referral details
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Referral details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReferralDetails"
+
+  /referrals/earnings:
+    get:
+      operationId: getReferralEarnings
+      tags: [referrals]
+      summary: Get referral earnings
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Referral earnings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EarningsResponse"
+
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: Get payment history
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Create a payment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentRequest"
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{paymentId}/verify:
+    post:
+      operationId: verifyPayment
+      tags: [payments]
+      summary: Verify payment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyPaymentRequest"
+      responses:
+        "200":
+          description: Payment verified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /withdrawals:
+    get:
+      operationId: listWithdrawals
+      tags: [payments]
+      summary: Get withdrawal history
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Withdrawals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Withdrawal"
+    post:
+      operationId: requestWithdrawal
+      tags: [payments]
+      summary: Request a withdrawal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawalRequest"
+      responses:
+        "201":
+          description: Withdrawal requested
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: Get notifications
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+
+  /notifications/{notificationId}/read:
+    put:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard stats
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List all users (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersListResponse"
+
+  /admin/users/{userId}:
+    get:
+      operationId: getAdminUser
+      tags: [admin]
+      summary: Get user details (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      operationId: updateAdminUser
+      tags: [admin]
+      summary: Update user (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/withdrawals:
+    get:
+      operationId: listAdminWithdrawals
+      tags: [admin]
+      summary: List all withdrawals (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All withdrawals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Withdrawal"
+
+  /admin/withdrawals/{withdrawalId}/approve:
+    put:
+      operationId: approveWithdrawal
+      tags: [admin]
+      summary: Approve withdrawal (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: withdrawalId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Withdrawal approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+
+  /admin/withdrawals/{withdrawalId}/reject:
+    put:
+      operationId: rejectWithdrawal
+      tags: [admin]
+      summary: Reject withdrawal (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: withdrawalId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Withdrawal rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Withdrawal"
+
+  /admin/referrals:
+    get:
+      operationId: listAdminReferrals
+      tags: [admin]
+      summary: List all referrals (admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All referrals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReferralRecord"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +624,690 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        referralCode:
+          type: string
+      required:
+        - name
+        - email
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [student, admin]
+        referralCode:
+          type: string
+        walletBalance:
+          type: number
+        totalEarnings:
+          type: number
+        isActive:
+          type: boolean
+        avatar:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - referralCode
+        - walletBalance
+        - totalEarnings
+        - isActive
+        - createdAt
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [student, admin]
+        isActive:
+          type: boolean
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        thumbnail:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: number
+        duration:
+          type: string
+        level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        language:
+          type: string
+        instructor:
+          type: string
+        rating:
+          type: number
+        totalStudents:
+          type: integer
+        isPublished:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - category
+        - price
+        - level
+        - instructor
+        - rating
+        - totalStudents
+        - isPublished
+        - createdAt
+
+    CourseDetail:
+      allOf:
+        - $ref: "#/components/schemas/Course"
+        - type: object
+          properties:
+            curriculum:
+              type: array
+              items:
+                $ref: "#/components/schemas/CourseSection"
+            whatYouLearn:
+              type: array
+              items:
+                type: string
+            requirements:
+              type: array
+              items:
+                type: string
+            isEnrolled:
+              type: boolean
+          required:
+            - curriculum
+            - whatYouLearn
+            - requirements
+
+    CourseSection:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        lessons:
+          type: array
+          items:
+            $ref: "#/components/schemas/Lesson"
+      required:
+        - id
+        - title
+        - lessons
+
+    Lesson:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        duration:
+          type: string
+        videoUrl:
+          type: string
+        isPreview:
+          type: boolean
+      required:
+        - id
+        - title
+        - duration
+        - isPreview
+
+    CreateCourseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        thumbnail:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        originalPrice:
+          type: number
+        duration:
+          type: string
+        level:
+          type: string
+          enum: [beginner, intermediate, advanced]
+        language:
+          type: string
+        instructor:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        whatYouLearn:
+          type: array
+          items:
+            type: string
+        requirements:
+          type: array
+          items:
+            type: string
+        isPublished:
+          type: boolean
+      required:
+        - title
+        - description
+        - category
+        - price
+        - level
+        - instructor
+
+    CoursesListResponse:
+      type: object
+      properties:
+        courses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Course"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required:
+        - courses
+        - total
+        - page
+        - totalPages
+
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        courseId:
+          type: integer
+        course:
+          $ref: "#/components/schemas/Course"
+        progressPercent:
+          type: integer
+        completedLessons:
+          type: integer
+        totalLessons:
+          type: integer
+        isCompleted:
+          type: boolean
+        certificateUrl:
+          type: string
+        enrolledAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - courseId
+        - progressPercent
+        - completedLessons
+        - totalLessons
+        - isCompleted
+        - enrolledAt
+
+    EnrollRequest:
+      type: object
+      properties:
+        courseId:
+          type: integer
+        paymentId:
+          type: integer
+      required:
+        - courseId
+
+    ProgressUpdateRequest:
+      type: object
+      properties:
+        lessonId:
+          type: integer
+        progressPercent:
+          type: integer
+      required:
+        - lessonId
+        - progressPercent
+
+    ReferralDetails:
+      type: object
+      properties:
+        referralCode:
+          type: string
+        referralLink:
+          type: string
+        totalReferrals:
+          type: integer
+        directReferrals:
+          type: integer
+        indirectReferrals:
+          type: integer
+        totalEarnings:
+          type: number
+        pendingEarnings:
+          type: number
+        referredUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReferredUser"
+      required:
+        - referralCode
+        - referralLink
+        - totalReferrals
+        - directReferrals
+        - indirectReferrals
+        - totalEarnings
+        - pendingEarnings
+        - referredUsers
+
+    ReferredUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [direct, indirect]
+        commissionEarned:
+          type: number
+      required:
+        - id
+        - name
+        - joinedAt
+        - level
+        - commissionEarned
+
+    EarningsResponse:
+      type: object
+      properties:
+        walletBalance:
+          type: number
+        totalEarnings:
+          type: number
+        thisMonthEarnings:
+          type: number
+        pendingEarnings:
+          type: number
+        earningsHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/EarningEntry"
+      required:
+        - walletBalance
+        - totalEarnings
+        - thisMonthEarnings
+        - pendingEarnings
+        - earningsHistory
+
+    EarningEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        amount:
+          type: number
+        type:
+          type: string
+          enum: [direct_commission, indirect_commission]
+        status:
+          type: string
+          enum: [pending, credited]
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - amount
+        - type
+        - status
+        - createdAt
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        courseId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, success, failed]
+        gateway:
+          type: string
+        transactionId:
+          type: string
+        invoiceUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - courseId
+        - amount
+        - status
+        - createdAt
+
+    CreatePaymentRequest:
+      type: object
+      properties:
+        courseId:
+          type: integer
+        gateway:
+          type: string
+          enum: [razorpay, stripe]
+      required:
+        - courseId
+        - gateway
+
+    VerifyPaymentRequest:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        gatewayResponse:
+          type: object
+          additionalProperties: true
+      required:
+        - transactionId
+
+    Withdrawal:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        amount:
+          type: number
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        bankDetails:
+          type: string
+        upiId:
+          type: string
+        notes:
+          type: string
+        processedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - amount
+        - status
+        - createdAt
+
+    WithdrawalRequest:
+      type: object
+      properties:
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [bank_transfer, upi]
+        bankDetails:
+          type: string
+        upiId:
+          type: string
+      required:
+        - amount
+        - method
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [enrollment, payment, referral, certificate, withdrawal, system]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - message
+        - type
+        - isRead
+        - createdAt
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        newUsersThisMonth:
+          type: integer
+        totalCourses:
+          type: integer
+        totalEnrollments:
+          type: integer
+        totalRevenue:
+          type: number
+        revenueThisMonth:
+          type: number
+        totalWithdrawalsPending:
+          type: integer
+        totalWithdrawalAmount:
+          type: number
+        revenueChart:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartDataPoint"
+        enrollmentChart:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChartDataPoint"
+        topCourses:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopCourse"
+      required:
+        - totalUsers
+        - newUsersThisMonth
+        - totalCourses
+        - totalEnrollments
+        - totalRevenue
+        - revenueThisMonth
+        - totalWithdrawalsPending
+        - totalWithdrawalAmount
+        - revenueChart
+        - enrollmentChart
+        - topCourses
+
+    ChartDataPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+      required:
+        - label
+        - value
+
+    TopCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        enrollments:
+          type: integer
+        revenue:
+          type: number
+      required:
+        - id
+        - title
+        - enrollments
+        - revenue
+
+    ReferralRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        referrerId:
+          type: integer
+        referredId:
+          type: integer
+        referrerName:
+          type: string
+        referredName:
+          type: string
+        level:
+          type: string
+          enum: [direct, indirect]
+        commissionAmount:
+          type: number
+        status:
+          type: string
+          enum: [pending, credited]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - referrerId
+        - referredId
+        - level
+        - commissionAmount
+        - status
+        - createdAt
+
+    UsersListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required:
+        - users
+        - total
+        - page
+        - totalPages
